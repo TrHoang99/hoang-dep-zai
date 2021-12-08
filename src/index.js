@@ -1,17 +1,19 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+
+import { render } from 'react-dom';
+import { withScriptjs } from "react-google-maps";
+import Map from './App';
 import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+const App = () => {
+  const MapLoader = withScriptjs(Map);
+  return (
+    <div >
+    <MapLoader
+      googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcQjrfAudzl6Ton7GA7D-gVqOINMFE7ns&libraries=places"
+      loadingElement={<div style={{ height: `50%` }} />}  
+    />
+    </div>
+  );
+};
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+render(<App />, document.getElementById('root'));
