@@ -8,16 +8,19 @@ import {
   GoogleMap,
   DirectionsRenderer,
   Marker,
+  InfoWindow
 } from "react-google-maps";
 import * as parksData from "./parking.json" ;
  
 class App extends React.Component {
   state = {
     directions: null,
+    parkInfo: null,
     origin: {lat: null, lng: null} ,
     destination: {lat: null, lng: null} ,
     pointOrigin: '',
     pointDestination: '',
+    distance: 0,
 };
 
   handleChangeOrigin = pointOrigin => {
@@ -69,11 +72,21 @@ onSearch = () => {
   this.drawDirections();
 
 };
+updateParkInfo =  (park) => {
+      this.setState({
+        ...this.state,
+          parkInfo: park
+      })
+};
+resetParkInfo = () => {
+      this.setState ({
+        parkInfo: null,
+      })
+};
       
 drawDirections = ()  => {
   const directionsService = new window.google.maps.DirectionsService();
   const { origin, destination } = this.state;
-
   directionsService.route(
     {
       origin,
@@ -84,7 +97,8 @@ drawDirections = ()  => {
       if (status === window.google.maps.DirectionsStatus.OK) {
         this.setState({
           ...this.state,
-          directions: result
+          directions: result,
+          distance: window.google.maps.geometry.spherical.computeDistanceBetween(origin, destination)
         });
       } else {
         console.error(`error fetching directions ${result}`);
@@ -93,7 +107,6 @@ drawDirections = ()  => {
   );
 }
      
- 
   render() {
     const GoogleMapExample = withGoogleMap(props => (
       <div>
@@ -103,15 +116,26 @@ drawDirections = ()  => {
         >
         <DirectionsRenderer 
             directions= {this.state.directions}
-        />
+        /> 
         
-         {parksData.data.map((park) => (
+         {parksData.data.map((park => (
                 <Marker 
                   key= {park.id}
                   position = {{lat: parseFloat(park.latitude), lng: parseFloat(park.longitude)}}
-                  
+                  onClick = {() => {this.setState({parkInfo: park})}}
                   />
-               ))}
+               )))}
+           { this.state.parkInfo && (
+             <InfoWindow 
+                position = {{
+                      lat: parseFloat(this.state.parkInfo.latitude),
+                      lng: parseFloat(this.state.parkInfo.longitude)
+                      }}
+                onCloseClick={() => {this.setState({parkInfo: null})}}
+              >
+              <div>Park Details</div>
+            </InfoWindow>
+           )}
         </GoogleMap>
          </div> 
     ));
@@ -130,7 +154,6 @@ drawDirections = ()  => {
               {...getInputProps({
                 placeholder: 'Search Origin ...',
                 className: 'location-search-input',
-                ref : this.originRef,
               })} 
             />
             <div className="autocomplete-dropdown-container">
@@ -161,7 +184,6 @@ drawDirections = ()  => {
               {...getInputProps({
                 placeholder: 'Search Destination',
                 className: 'location-search-input',
-                ref: this.destinationRef,
               })}
             />
             <div className="autocomplete-dropdown-container"  >
@@ -182,7 +204,8 @@ drawDirections = ()  => {
     </PlacesAutocomplete>
     </div>
     <div> 
-    <button  type="button" onClick={() => this.onSearch()}>Search</button>     
+    <button  type="button" onClick={() => this.onSearch()}>Search</button>    
+    <p> Distance: {Math.round(this.state.distance)/1000} km </p> 
          <GoogleMapExample
             containerElement={<div style={{ height: `100vh`, width: "100vw", float:"right" }} />}
             mapElement={<div style={{ height: `100%` }} />}
